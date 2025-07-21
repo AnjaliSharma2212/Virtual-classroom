@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .hide {
+        display: none;
+      }
+      .show {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <h3 id="user">Welcome to Chat Application</h3>
+    <div id="registerDiv">
+      <input id="userName" placeholder="Enter User Name" />
+      <button id="registerUserBtn">Register User</button>
+    </div>
+    <div id="sendMessageDiv" class="hide">
+      <input id="sendMessageTag" type="text" placeholder="Enter Message" />
+      <button id="sendMessageBtn">Send Message</button>
+    </div>
+    <div id="chatMessageDiv"></div>
+  </body>
+  <script type="module">
+    import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
+
+    const socket = io("http://localhost:3000"); // put our backend server link
+
+    /// catch the tags and emit register user event
+
+    let registerUserBtn = document.getElementById("registerUserBtn");
+    registerUserBtn.addEventListener("click", () => {
+      let userName = document.getElementById("userName").value;
+      if (userName == "") {
+        alert("Enter UserName");
+      } else {
+        socket.emit("registerUser", userName);
+        document.getElementById("user").textContent = `Hi, ${userName}`;
+        document.getElementById("registerDiv").style.display = "none";
+
+        /// unhide the sendMessage Div, remove class .hide and add .show
+        let sendMessageDiv = document.getElementById("sendMessageDiv");
+        sendMessageDiv.classList.remove("hide");
+        sendMessageDiv.classList.add("show");
+      }
+    });
+    /// add sendMessage Btn Event
+
+    document.getElementById("sendMessageBtn").addEventListener("click", () => {
+      let sendMessageTag = document.getElementById("sendMessageTag");
+      // once input tag is catched, then get its value and send to socket
+      console.log(sendMessageTag.value);
+      socket.emit("sendMessage", sendMessageTag.value);
+      // empty the input tag for next message
+      sendMessageTag.value = "";
+    });
+
+    socket.on("chat_History", (chatArray) => {
+      //console.log(chatArray)
+      appendChatIntoUI(chatArray);
+    });
+
+    function appendChatIntoUI(chatArray) {
+      let chatMessageDiv = document.getElementById("chatMessageDiv");
+      chatMessageDiv.innerHTML = "";
+      chatArray.map((chat, index) => {
+        //chat is an obj where from, message and timeStamp are keys
+        let chatDiv = document.createElement("div");
+        chatDiv.textContent = `${index+1}. ${chat.from}:${chat.message}`;
+
+        chatMessageDiv.appendChild(chatDiv);
+      });
+    }
+  </script>
+</html>
